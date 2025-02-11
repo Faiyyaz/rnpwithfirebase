@@ -23,6 +23,8 @@ import {navigationRef} from './src/navigators/RootNavigator';
 import Toast from 'react-native-toast-message';
 import toastConfig from './src/components/common/RNPToast';
 import {KeyboardProvider} from 'react-native-keyboard-controller';
+import analytics from '@react-native-firebase/analytics';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const App1 = () => {
   const {LightTheme, DarkTheme} = adaptNavigationTheme({
@@ -38,6 +40,8 @@ const App1 = () => {
   const paperTheme =
     colorScheme === 'dark' ? CombinedDarkTheme : CombinedLightTheme;
 
+  const routeNameRef = useRef();
+
   return (
     <PaperProvider theme={paperTheme}>
       <ThemeProvider value={paperTheme}>
@@ -51,7 +55,32 @@ const App1 = () => {
           />
           <KeyboardProvider statusBarTranslucent>
             <UserProvider>
-              <NavigationContainer ref={navigationRef} theme={paperTheme}>
+              <NavigationContainer
+                onReady={() => {
+                  const currentRouteName =
+                    navigationRef.current.getCurrentRoute().name;
+                  // Save the current route name for later comparision
+                  routeNameRef.current = currentRouteName;
+                }}
+                onStateChange={async () => {
+                  const previousRouteName = routeNameRef.current;
+                  const currentRouteName =
+                    navigationRef.current.getCurrentRoute().name;
+                  if (previousRouteName !== currentRouteName) {
+                    await analytics().logScreenView({
+                      screen_class: renameScreenName(currentRouteName),
+                      screen_name: currentRouteName,
+                    });
+                    crashlytics().log(
+                      `Screen Class: ${renameScreenName(currentRouteName)}`,
+                    );
+                  }
+
+                  // Save the current route name for later comparision
+                  routeNameRef.current = currentRouteName;
+                }}
+                ref={navigationRef}
+                theme={paperTheme}>
                 <App />
               </NavigationContainer>
             </UserProvider>

@@ -4,16 +4,16 @@ import {
   pick,
 } from '@react-native-documents/picker';
 import {
-  Asset,
   ImageLibraryOptions,
   ImagePickerResponse,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
+import {UploadFile} from '../interfaces/UploadFile';
 
 export async function pickSingleAttachment(
   options?: DocumentPickerOptions,
-): Promise<DocumentPickerResponse | null> {
+): Promise<UploadFile | null> {
   try {
     const results: DocumentPickerResponse[] | null = await pick({
       ...options,
@@ -21,7 +21,12 @@ export async function pickSingleAttachment(
     });
 
     if (results.length > 0) {
-      return results[0];
+      const file = results[0];
+      return {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      };
     } else {
       return null;
     }
@@ -33,7 +38,7 @@ export async function pickSingleAttachment(
 
 export async function pickMultipleAttachment(
   options?: DocumentPickerOptions,
-): Promise<DocumentPickerResponse[]> {
+): Promise<UploadFile[]> {
   try {
     const results: DocumentPickerResponse[] | null = await pick({
       ...options,
@@ -41,7 +46,15 @@ export async function pickMultipleAttachment(
     });
 
     if (results.length > 0) {
-      return results;
+      const files: UploadFile[] = [];
+      for await (const result of results) {
+        files.push({
+          uri: result.uri,
+          name: result.name,
+          type: result.type,
+        });
+      }
+      return files;
     } else {
       return [];
     }
@@ -53,7 +66,7 @@ export async function pickMultipleAttachment(
 
 export async function pickSingleImage(
   options?: ImageLibraryOptions,
-): Promise<Asset | null> {
+): Promise<UploadFile | null> {
   try {
     if (!options) {
       options = {
@@ -68,7 +81,12 @@ export async function pickSingleImage(
     });
 
     if (results.assets && results.assets.length > 0) {
-      return results.assets[0];
+      const file = results.assets[0];
+      return {
+        uri: file.uri,
+        name: file.fileName,
+        type: file.type,
+      };
     } else {
       return null;
     }
@@ -80,7 +98,7 @@ export async function pickSingleImage(
 
 export async function pickMultipleImage(
   options?: ImageLibraryOptions,
-): Promise<Asset[] | null> {
+): Promise<UploadFile[] | null> {
   try {
     if (!options) {
       options = {
@@ -92,7 +110,15 @@ export async function pickMultipleImage(
       includeBase64: true,
     });
     if (results.assets && results.assets.length > 0) {
-      return results.assets;
+      const files: UploadFile[] = [];
+      for await (const result of results.assets) {
+        files.push({
+          uri: result.uri,
+          name: result.fileName,
+          type: result.type,
+        });
+      }
+      return files;
     } else {
       return [];
     }
@@ -104,7 +130,7 @@ export async function pickMultipleImage(
 
 export async function takeImage(
   options?: ImageLibraryOptions,
-): Promise<Asset | null> {
+): Promise<UploadFile | null> {
   try {
     if (!options) {
       options = {
@@ -117,7 +143,12 @@ export async function takeImage(
     });
 
     if (results.assets && results.assets.length > 0) {
-      return results.assets[0];
+      const file = results.assets[0];
+      return {
+        uri: file.uri,
+        name: file.fileName,
+        type: file.type,
+      };
     } else {
       return null;
     }
